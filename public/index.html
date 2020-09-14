@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <!-- 
+        需要把下面的模版转换成render函数
+        render() {
+            return _c('div',{id: app},
+                _c('p', undefined,_v(_s(name))),
+                _c('span', undefined, _v(_s(age)))
+            )
+        }
+     -->
+    <div id="app" style="color: red;background-color: blue;"> hello
+        <p>{{name}}</p>
+        <span>{{age}}</span>
+    </div>
+    <script src="/dist/umd/vue.js"></script>
+    <script>
+        let vm = new Vue({
+            el: '#app',
+            beforeCreate() {
+                // console.log('页面上的beforeCreate')
+            },
+            created() {
+                // console.log('页面上的created', this.name, this.$el)
+            },
+            beforeMount() {
+                // console.log('页面上的beforeMount',this.$el)
+            },
+            mounted() {
+                // console.log('页面上的mouted',this.$el)
+            },
+            data: {
+                name: 'zhangsan',
+                age: 12,
+                obj: {
+                    a: 1,
+                    b: 2,
+                    c: {
+                        d: 1,
+                        e: 2
+                    }
+                },
+                arr: [
+                    {
+                        arr1: 1,
+                        arr2: 2
+                    },
+                    {
+                        arr3: 3
+                    }
+                ]
+            }
+        })
+        vm._data.arr.push({
+            xx: 'cc'
+        })
+        // console.log(vm._data)
+        // console.log(vm.arr)
+
+        setTimeout(() => {
+            vm.age = 1000
+            // vm._update(vm._render())
+        }, 1000);
+    </script>
+</body>
+</html>
