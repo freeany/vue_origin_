@@ -20,3 +20,7 @@
 q: 为什么每个属性都要有一个dep？
 
 a: 因为每个属性不一定都会被get(比如我定义了属性，但是没有渲染到页面上/没有作为computed/watch的依赖)，而不被get就没有依赖，没有依赖数据被改变只是被改变了，并不会去通知谁。可以避免 多做一些无意义的事情。
+
+q: 渲染watcher是怎么存放到该属性的dep实例上的。
+
+a: 渲染watcher在进行vm._update(vm._render())前,将当前watcher存放到Dep.target上， 在执行render函数的时候 对 属性进行get的获取操作，这个时候将渲染watcher存放到该响应式属性的Dep实例上去。 
