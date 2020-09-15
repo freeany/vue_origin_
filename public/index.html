@@ -18,6 +18,7 @@
     <div id="app" style="color: red;background-color: blue;"> hello
         <p>{{name}}</p>
         <span>{{age}}</span>
+        <p>{{obj}}</p>
     </div>
     <script src="/dist/umd/vue.js"></script>
     <script>
@@ -65,6 +66,7 @@
 
         setTimeout(() => {
             vm.age = 1000
+            vm.obj = {a: 1}
             // vm._update(vm._render())
         }, 1000);
     </script>

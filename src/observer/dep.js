@@ -11,9 +11,13 @@ class Dep {
         this.subs = []
     }
     depend() {
-        this.subs.push(Dep.target)
+        // 如果在页面中多次使用了变量，那么会存放重复的watcher， 所以需要将Dep与watcher进行相互记忆。
+        // this.subs.push(Dep.target) // 不合适
+        Dep.target.addDep(this) // 记住当前
     }
-
+    addSubs(watcher) {
+        this.subs.push(watcher)
+    }
     notify() {
         this.subs.forEach(watcher => watcher.update())
     }

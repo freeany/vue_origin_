@@ -53,7 +53,9 @@ methods.forEach(method => {
         }
         this.__ob__.observerArray(inserted)
         // 调用原生方法走原来的逻辑
-        Array.prototype[method].apply(this, args)
+        let result = Array.prototype[method].apply(this, args)
+        this.__ob__.dep.notify()
+        return result
     }
     
 })

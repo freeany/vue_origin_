@@ -268,7 +268,11 @@
       this.__ob__.observerArray(inserted); // 调用原生方法走原来的逻辑
 
 
-      Array.prototype[method].apply(this, args);
+      var result = Array.prototype[method].apply(this, args);
+
+      this.__ob__.dep.notify();
+
+      return result;
     };
   });
 
@@ -292,7 +296,14 @@
     _createClass(Dep, [{
       key: "depend",
       value: function depend() {
-        this.subs.push(Dep.target);
+        // 如果在页面中多次使用了变量，那么会存放重复的watcher， 所以需要将Dep与watcher进行相互记忆。
+        // this.subs.push(Dep.target) // 不合适
+        Dep.target.addDep(this); // 记住当前
+      }
+    }, {
+      key: "addSubs",
+      value: function addSubs(watcher) {
+        this.subs.push(watcher);
       }
     }, {
       key: "notify",
@@ -322,9 +333,11 @@
     function Observer(value) {
       _classCallCheck(this, Observer);
 
+      this.dep = new Dep(); // 这是数组专门使用的dep实例，而对象不使用这个。
       // vue如果数据的层次过多，需要递归的去解析对象中的属性，依次增加set和get方法
       // 对数组进行单独的监测
       // 给value对象加上一个ob属性，记录下当前的observer对象
+
       def(value, '__ob__', this);
 
       if (Array.isArray(value)) {
@@ -369,7 +382,8 @@
 
   function defineReactive(data, key, value) {
     var dep = new Dep();
-    observe(value); // 进行递归劫持。对深层次(两层以上)的对象进行递归查询其属性并进行数据劫持。
+    var childOb = observe(value); // 进行递归劫持。对深层次(两层以上)的对象进行递归查询其属性并进行数据劫持。
+    // 先明确： 如果是数组的话，这步走完就不会往下走了， 而是回到了上面的observerArray，和对象不一样，不仅对象中的属性，该对象也会被get，所以改变对象中的属性和该对象都会触发更新。但是数组不会。
 
     Object.defineProperty(data, key, {
       get: function get() {
@@ -378,7 +392,17 @@
         if (Dep.target) {
           // 是否经过渲染watcher
           // 把当前wathcer 和 Dep建立一个联系
-          dep.depend(); /// 意味着我要将w渲染athcher存起来
+          dep.depend(); /// 意味着我要将渲染athcher存起来
+          // 数组的依赖收集
+
+          if (childOb) {
+            childOb.dep.depend(); // 收集了数组的依赖，不用担心对象的问题，对象如果有相同的依赖会被过滤掉。
+            // 如果数组中还有数组, 然后去收集
+
+            if (Array.isArray(value)) {
+              dependArray(value);
+            }
+          }
         }
 
         return value;
@@ -392,6 +416,17 @@
         dep.notify(); // 使用notify进行更新。
       }
     });
+  }
+
+  function dependArray(value) {
+    for (var i = 0; i < value.length; i++) {
+      var current = value[i];
+      current.__ob__ && current.__ob__.dep.depend();
+
+      if (Array.isArray(value[i])) {
+        dependArray(value[i]);
+      }
+    }
   }
 
   function observe(data) {
@@ -718,11 +753,27 @@
       this.options = options;
       this.id = id$1++;
       this.getter = exprOrFn; // 将内部传递过来的函数放到getter属性上，并不执行，是因为要做其他的逻辑
+      // 定义set集合，看wathcer里有没有放过这个dep
 
+      this.depsId = new Set();
+      this.deps = [];
       this.get();
-    }
+    } // wathcer里不能放重复的dep， dep里不能放重复的watcher
+
 
     _createClass(Watcher, [{
+      key: "addDep",
+      value: function addDep(dep) {
+        var id = dep.id; // 拿到dep中唯一的id值。
+
+        if (!this.depsId.has(id)) {
+          this.depsId.add(id); // 把dep对象存进去
+
+          this.deps.push(dep);
+          dep.addSubs(this); // 将当前的watcher存到dep中
+        }
+      }
+    }, {
       key: "get",
       value: function get() {
         pushTarget(this); // 没渲染之前，把当前watcher存起来。
