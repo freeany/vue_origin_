@@ -268,7 +268,7 @@
       this.__ob__.observerArray(inserted); // 调用原生方法走原来的逻辑
 
 
-      var result = Array.prototype[method].apply(this, args);
+      var result = Array.prototype[method].apply(this, args); // 派发更新
 
       this.__ob__.dep.notify();
 
@@ -984,6 +984,8 @@
     Vue.prototype._render = function () {
       var vm = this;
       var render = vm.$options.render;
+      console.log(render);
+      debugger;
       var vnode = render.call(vm); // 去实例上去取值
 
       return vnode;
